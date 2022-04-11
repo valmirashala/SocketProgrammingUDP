@@ -4,9 +4,9 @@ var HOST = '127.0.0.1';
 
 var dgram = require('dgram');
 
-var message = new Buffer.from('I am Valmira!');
+var message = new Buffer.from('I am someone!');
 
-var request=new Buffer.from('read');
+var request=new Buffer.from('write');
 var client = dgram.createSocket('udp4');
 
 client.send(message, 0, message.length, PORT, HOST, function(err, bytes) {
@@ -21,7 +21,6 @@ client.send(request, 0, request.length, PORT, HOST, function(err, bytes) {
      if (err) throw err;
 
      console.log('UDP client request sent to ' + HOST +':'+ PORT);
-   
 
 });
 

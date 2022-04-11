@@ -48,133 +48,44 @@ server.on('listening', function () {
   );
 });
 
-// When udp server receive message.
+// When udp server receives a message.
 server.on('message', function (message, remote) {
-  console.log(' ' + remote.address + ' : ' + remote.port + ' - ');
-  console.log('Message data: ' + message);
-  let msg = String(message);
+  console.log(remote.address + ':' + remote.port +' - ' + message);
 
-  let userd = msg.split(' ');
-
-  const [request, usr, pwd] = userd;
-
-  const user = findUser(usr, pwd);
-
-  const { read, write, execute } = user.permissions;
-
-  console.log('Users info: ');
-  console.log(user);
-
-  switch (request.slice(0, request.length - 1)) {
-    case 'read': {
-      if (read == true) {
-        console.log(`User ${user.username} has permissions to read file `);
-        fs.readFile('text.txt', 'utf8', (error, data) => {
-          if (error) {
-            console.log(error);
-            return;
-          } else {
-            console.log('File content: \n');
-            console.log(data);
-          }
-        });
-      } else {
-        console.log(
-          `User ${user.username}does not have permissions to read file `
-        );
+if(message='read'){
+ 
+          server.send(fs.readFileSync('text.txt','utf-8'),remote.port,remote.address); 
+}
+else if(message='write'){
+      if(remote.address=='127.0.0.1'){
+          let data="Pershendetje";
+          fs.writeFileSync('text.txt',data);
       }
-
-      break;
-    }
-    case 'write': {
-      if (write == true) {
-        console.log(`User ${user.username} is allowed to write on file `);
-
-        const content = userd;
-        fs.writeFile('text.txt', content, (err) => {
-          if (err) {
-            console.log('Write file exception ' + err);
-          } else {
-            console.log('File written successfully ');
-          }
-        });
-      } else {
-        console.log(
-          `User ${user.username}does not have permissions to write on file `
-        );
+      else{
+          server.send("You don't have access to write in the file", remote.port,remote.address);
       }
-      break;
-    }
-    case 'execute': {
-      if (execute == true) {
-        if (user.permissions.write == false) {
-          console.log(
-            `User ${user.username} has permissions to open file  {readonly}`
-          );
-          exec(
-            'chmod 0444 text.txt && xdg-open text.txt',
-            (error, stdout, stderr) => {
-              if (error) {
-                console.log(`error: ${error.message}`);
-                return;
-              }
-              if (stderr) {
-                console.log(`stderr: ${stderr}`);
-                return;
-              }
-              console.log(`stdout: ${stdout}`);
-            }
-          );
-        } else {
-          console.log(
-            `User ${user.username} has permissions  to open file  {read-write}`
-          );
-          exec(
-            'chmod u=rwx,g=r,o= text.txt && xdg-open text.txt',
-            (error, stdout, stderr) => {
-              if (error) {
-                console.log(`error: ${error.message}`);
-                return;
-              }
-              if (stderr) {
-                console.log(`stderr: ${stderr}`);
-                return;
-              }
-              console.log(`stdout: ${stdout}`);
-            }
-          );
-        }
-      } else {
-        console.log(
-          `User ${user.username} does not have permissions to execute files `
-        );
-      }
-      break;
-    }
-    case 'ls': {
-      if (execute == true) {
-        console.log(`User ${user.username} has permissions to list all files `);
+     }
+else if(message='delete'){
+  if(remote.address=='127.0.0.1'){
 
-        exec('ls -la', (error, stdout, stderr) => {
-          if (error) {
-            console.log(`error: ${error.messagee}`);
-            return;
-          }
-          if (stderr) {
-            console.log(`stderr: ${stderr}`);
-            return;
-          }
-          console.log(`stdout: ${stdout}`);
-        });
-      }
-    }
-
-    default: {
-      console.log('Wrong command ');
-    }
+      fs.unlinkSync(text.txt);
+      server.send('Deleted file',remote.port,remote.address);
   }
+   else{
+       server.send('Access denied');
+   }
+  }
+   else{
+     var msgResponse="Welcome";
 
-  let msgResponse = 'Request sent successfully ';
+     server.send(msgResponse, 0, msgResponse.length, remote.port, remote.address, function(err, bytes) {
+
+  if (err) throw err;
+
+   console.log('UDP server message sent to ' + remote.address +':'+ remote.port);
+
+});
+}
 
   server.send(
     msgResponse,
